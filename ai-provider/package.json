@@ -1,0 +1,57 @@
+{
+  "name": "laya-mlx",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "sideEffects": false,
+  "description": "AI SDK evaluation provider for a laya-mlx server (local typed decisions on Apple silicon)",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "!src/**/*.test.ts"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "type-check": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "prepack": "npm run build",
+    "example": "npm run build && tsx example/evaluate.ts"
+  },
+  "keywords": [
+    "ai-sdk",
+    "ai-sdk-provider",
+    "laya",
+    "mlx",
+    "apple-silicon",
+    "evaluation",
+    "local-ai"
+  ],
+  "dependencies": {
+    "@ai-sdk/provider": "^4.0.20",
+    "@ai-sdk/provider-utils": "^5.0.52"
+  },
+  "peerDependencies": {
+    "zod": "^3.25.76 || ^4.1.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.19",
+    "ai": "^7.0.123",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4",
+    "zod": "^4.1.8"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

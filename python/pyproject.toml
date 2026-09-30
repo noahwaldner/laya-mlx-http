@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "laya-mlx-serve"
+version = "0.1.0"
+description = "HTTP server that serves laya-mlx typed decision models over your LAN"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+keywords = ["laya", "mlx", "apple-silicon", "local-ai", "decision-model", "api"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Operating System :: MacOS",
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: Apache Software License",
+]
+dependencies = [
+  "laya-mlx>=0.2,<1",
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "httpx>=0.27"]
+
+[project.scripts]
+laya-mlx-serve = "laya_mlx_serve.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/laya_mlx_serve"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,54 @@
+# Copy into configuration.yaml (or include with !include).
+# Replace 192.168.0.200 with the IP of the machine running:
+#   laya-mlx-serve --host 0.0.0.0 --api-key <key>
+# Put <key> in secrets.yaml as `laya_api_key`; drop the headers if you run
+# without an API key (loopback-only setups).
+
+rest_command:
+  # Full control: any preset, any text, via service call.
+  laya_predict:
+    url: "http://192.168.0.200:8000/v1/predict"
+    method: POST
+    content_type: "application/json"
+    headers:
+      X-API-Key: !secret laya_api_key   # delete this block if no --api-key was set
+    payload: >
+      {"text": "{{ message }}", "preset": "triage", "flat": true}
+
+sensor:
+  # Pulls a classification for a fixed / templated text.
+  - platform: rest
+    name: laya message triage
+    resource: "http://192.168.0.200:8000/v1/predict?preset=triage&flat=true&text=My+payment+failed+twice"
+    method: GET
+    headers:
+      X-API-Key: !secret laya_api_key
+    value_template: "{{ value_json.flat.intent }}"
+    json_attributes:
+      - flat
+      - answers
+    scan_interval: 300
+    timeout: 60
+
+  # Server reachability.
+  - platform: rest
+    name: laya api
+    resource: "http://192.168.0.200:8000/health"
+    value_template: "{{ value_json.status }}"
+    json_attributes:
+      - ready
+      - model
+    scan_interval: 60
+
+automation:
+  - alias: classify incoming message
+    trigger:
+      - platform: state
+        entity_id: sensor.incoming_message
+    action:
+      - service: rest_command.laya_predict
+        data:
+          message: "{{ states('sensor.incoming_message') }}"
+      # Response lands in: state_attributes.rest_command... not stored;
+      # for direct use prefer the REST sensor above, which exposes
+      # state_attr('sensor.laya_message_triage', 'flat').intent
