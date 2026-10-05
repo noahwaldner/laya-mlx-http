@@ -18,7 +18,7 @@ machine B (or C) just needs the URL.
 1. **Server** (Apple silicon, Python 3.11+):
 
    ```bash
-   pip install laya-mlx-http
+   uv tool install laya-mlx-http
    laya-mlx-http --host 0.0.0.0 --api-key "$(openssl rand -hex 24)"
    ```
 

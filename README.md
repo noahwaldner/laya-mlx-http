@@ -33,7 +33,7 @@ AI SDK — you need it *only* if you call the model through `experimental_evalua
 **On the machine with the GPU:**
 
 ```bash
-pip install laya-mlx-http
+uv tool install laya-mlx-http
 
 # localhost only (default)
 laya-mlx-http

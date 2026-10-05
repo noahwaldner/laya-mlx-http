@@ -55,7 +55,7 @@ matches all four version strings, then publishes both packages in parallel.
 Verify:
 
 ```bash
-pip index versions laya-mlx-http
+uvx laya-mlx-http --version
 npm view @noahwaldner/laya-mlx-http version
 ```
 

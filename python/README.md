@@ -17,7 +17,7 @@ Requires Apple silicon (MLX) and Python 3.11+.
 ## Install
 
 ```bash
-pip install laya-mlx-http          # or: uv tool install laya-mlx-http
+uv tool install laya-mlx-http          # or: pip install laya-mlx-http
 ```
 
 ## Run
