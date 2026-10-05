@@ -31,25 +31,14 @@ python3 scripts/versions.py check       # or: make check-versions (CI runs this)
 
 ### npm — `@noahwaldner/laya-mlx-http`
 
-The trusted-publisher settings only exist once the package name exists, so the
-first release uses a token:
-
-1. [npmjs.com](https://www.npmjs.com) → Access Tokens → **Generate New Token** →
-   *Granular Access Token*, Packages and scopes: **Read and write**.
-2. GitHub repo → Settings → Secrets and variables → **Actions** →
-   **New repository secret**: name `NPM_TOKEN`, value = the token.
-3. If npm complains the `@noahwaldner` scope does not exist, create it first
-   (free for public packages) under npmjs.com → Orgs.
-
-After `v0.1.0` is published, switch to tokenless publishing:
-
 1. npmjs.com → `@noahwaldner/laya-mlx-http` → Settings → **Trusted Publisher**
    → GitHub Actions: owner `noahwaldner`, repository `laya-mlx-http`,
    workflow `release.yml`.
 2. **Allowed actions**: tick `npm publish` (new configurations default to
    stage-only).
-3. Delete the `NPM_TOKEN` secret — OIDC is preferred automatically when both
-   are present.
+3. No tokens are stored in GitHub — CI authenticates via OIDC. Note that
+   `npm stage publish` is always allowed for a trusted publisher, so a future
+   workflow can stage instead of publish and leave approval to a human.
 
 ## Cutting a release
 

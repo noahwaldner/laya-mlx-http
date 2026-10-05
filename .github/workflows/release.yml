@@ -5,8 +5,8 @@ name: Release
 #   git tag v0.2.0 && git push origin master --tags
 #
 # One-time setup (see RELEASING.md):
-#   - PyPI: pending trusted publisher (workflow: release.yml)
-#   - npm: NPM_TOKEN secret for the first publish, then a trusted publisher
+#   - PyPI: trusted publisher (workflow: release.yml)
+#   - npm: trusted publisher (workflow: release.yml, allow "npm publish")
 
 on:
   push:
@@ -33,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.2.0
 
       - name: Build sdist + wheel
         run: uv build --out-dir dist python
@@ -72,9 +72,7 @@ jobs:
       - name: Update npm
         run: npm install -g npm@latest
 
-      # OIDC is used automatically when a trusted publisher is configured;
-      # NPM_TOKEN is only the fallback for the very first publish.
+      # OIDC trusted publishing: npm picks up the workflow identity
+      # automatically (id-token: write above), no token involved.
       - name: Publish
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
