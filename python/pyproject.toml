@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "laya-mlx-http"
-version = "0.1.0"
+version = "0.1.1"
 description = "HTTP server that serves laya-mlx typed decision models over your LAN"
 readme = "README.md"
 license = "Apache-2.0"
