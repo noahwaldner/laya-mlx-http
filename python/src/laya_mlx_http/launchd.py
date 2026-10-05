@@ -11,7 +11,7 @@ from typing import Sequence
 
 from .settings import Settings
 
-LABEL = "laya-mlx-serve"
+LABEL = "laya-mlx-http"
 PLIST_PATH = Path.home() / "Library" / "LaunchAgents" / f"{LABEL}.plist"
 LOG_PATH = Path.home() / "Library" / "Logs" / f"{LABEL}.log"
 
@@ -43,7 +43,7 @@ def plist_payload(settings: Settings) -> dict:
         "ProgramArguments": [
             sys.executable,
             "-m",
-            "laya_mlx_serve",
+            "laya_mlx_http",
             "run",
             "--host",
             settings.host,
@@ -83,8 +83,8 @@ def install(settings: Settings) -> int:
     if code != 0:
         raise SystemExit(f"launchd refused to load {PLIST_PATH}")
     print(f"installed {LABEL} ({PLIST_PATH})")
-    print(f"  status: laya-mlx-serve status")
-    print(f"  logs:   laya-mlx-serve logs   ({LOG_PATH})")
+    print(f"  status: laya-mlx-http status")
+    print(f"  logs:   laya-mlx-http logs   ({LOG_PATH})")
     return 0
 
 
@@ -100,7 +100,7 @@ def start(settings: Settings) -> int:  # noqa: ARG001
     _require_macos()
     code = _launchctl(["kickstart", "-k", f"{_domain()}/{LABEL}"])
     if code != 0:
-        raise SystemExit(f"{LABEL} is not loaded; run 'laya-mlx-serve install' first")
+        raise SystemExit(f"{LABEL} is not loaded; run 'laya-mlx-http install' first")
     print(f"started {LABEL}")
     return 0
 
@@ -123,7 +123,7 @@ def status(settings: Settings) -> int:  # noqa: ARG001
     if code == 0:
         print(f"running: {LABEL} ({settings.base_url})\nplist: {PLIST_PATH}\nlogs:  {LOG_PATH}")
     else:
-        print(f"installed but not running: {LABEL}\nrun 'laya-mlx-serve start'")
+        print(f"installed but not running: {LABEL}\nrun 'laya-mlx-http start'")
     return code
 
 

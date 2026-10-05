@@ -4,7 +4,6 @@ import {
   type ProviderV4,
 } from '@ai-sdk/provider';
 import {
-  loadOptionalSetting,
   withoutTrailingSlash,
   withUserAgentSuffix,
   type FetchFunction,
@@ -21,9 +20,9 @@ export interface LayaMlxProvider extends ProviderV4 {
 }
 
 export interface LayaMlxProviderSettings {
-  /** API key sent as X-API-Key. Optional: defaults to the LAYA_MLX_API_KEY environment variable. */
+  /** API key sent as X-API-Key. Optional; must be passed explicitly, there is no environment fallback. */
   apiKey?: string;
-  /** Server base URL. Defaults to LAYA_MLX_BASE_URL or http://127.0.0.1:8000. */
+  /** Server base URL. Defaults to http://127.0.0.1:8000. */
   baseURL?: string;
   headers?: Record<string, string>;
   fetch?: FetchFunction;
@@ -33,20 +32,9 @@ export function createLayaMlx(
   options: LayaMlxProviderSettings = {},
 ): LayaMlxProvider {
   const baseURL =
-    withoutTrailingSlash(
-      options.baseURL ??
-        loadOptionalSetting({
-          settingValue: undefined,
-          environmentVariableName: 'LAYA_MLX_BASE_URL',
-        }) ??
-        'http://127.0.0.1:8000',
-    ) ?? 'http://127.0.0.1:8000';
-  const apiKey =
-    options.apiKey ??
-    loadOptionalSetting({
-      settingValue: undefined,
-      environmentVariableName: 'LAYA_MLX_API_KEY',
-    });
+    withoutTrailingSlash(options.baseURL ?? 'http://127.0.0.1:8000') ??
+    'http://127.0.0.1:8000';
+  const { apiKey } = options;
   const headers = () =>
     withUserAgentSuffix(
       {

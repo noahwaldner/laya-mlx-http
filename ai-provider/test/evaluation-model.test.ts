@@ -71,26 +71,28 @@ describe('createLayaMlx', () => {
   it('posts to {baseURL}/v1/predict and strips a trailing slash', async () => {
     const { fetch, calls } = stubFetch(okReply);
     const model = createLayaMlx({
-      baseURL: 'http://mac-mini:8000/',
+      baseURL: 'http://remote-host:8000/',
       fetch,
     }).evaluationModel('laya-mlx');
 
     await evaluate(model);
 
     expect(calls).toHaveLength(1);
-    expect(calls[0].url).toBe('http://mac-mini:8000/v1/predict');
+    expect(calls[0].url).toBe('http://remote-host:8000/v1/predict');
     expect(calls[0].body.model).toBe('laya-mlx');
     expect(calls[0].body.text).toBe('I was charged twice.');
   });
 
-  it('reads LAYA_MLX_BASE_URL from the environment', async () => {
+  it('ignores the environment and uses the default base URL', async () => {
     vi.stubEnv('LAYA_MLX_BASE_URL', 'http://env-host:9000');
+    vi.stubEnv('LAYA_MLX_API_KEY', 'env-key');
     const { fetch, calls } = stubFetch(okReply);
     const model = createLayaMlx({ fetch }).evaluationModel('laya-mlx');
 
     await evaluate(model);
 
-    expect(calls[0].url).toBe('http://env-host:9000/v1/predict');
+    expect(calls[0].url).toBe('http://127.0.0.1:8000/v1/predict');
+    expect(calls[0].headers['x-api-key']).toBeUndefined();
   });
 
   it('sends X-API-Key only when a key is configured', async () => {

@@ -7,8 +7,8 @@ from typing import Any, Dict
 import pytest
 from fastapi.testclient import TestClient
 
-import laya_mlx_serve.app as app_module
-from laya_mlx_serve import Settings, create_app
+import laya_mlx_http.app as app_module
+from laya_mlx_http import Settings, create_app
 
 PRESET = "triage"
 

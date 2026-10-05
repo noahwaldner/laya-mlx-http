@@ -1,32 +1,32 @@
-# laya-mlx
+# @noahwaldner/laya-mlx-http
 
 AI SDK [evaluation provider](https://ai-sdk.dev/providers/ai-sdk-providers/typesafe-ai) for a
-[`laya-mlx`](https://pypi.org/project/laya-mlx/) server: Choice, Score and Boolean questions
-answered by a typed decision model running on Apple silicon.
+[`laya-mlx-http`](https://pypi.org/project/laya-mlx-http/) server: Choice, Score and Boolean
+questions answered by a typed decision model running on Apple silicon.
 
-It speaks plain HTTP to your own `laya-mlx-serve` instance — machine A holds the model,
-machine B (or C, or your Home Assistant box) just needs the URL.
+It speaks plain HTTP to your own `laya-mlx-http` instance — machine A holds the model,
+machine B (or C) just needs the URL.
 
 ## Setup
 
-1. **Server** (Apple silicon):
+1. **Server** (Apple silicon, Python 3.11+):
 
    ```bash
-   pip install laya-mlx-serve
-   laya-mlx-serve --host 0.0.0.0 --api-key "$(openssl rand -hex 24)"
+   pip install laya-mlx-http
+   laya-mlx-http --host 0.0.0.0 --api-key "$(openssl rand -hex 24)"
    ```
 
-2. **Client** (any machine):
+2. **Client** (any machine, Node 22+):
 
    ```bash
-   npm install laya-mlx ai zod
+   npm install @noahwaldner/laya-mlx-http ai zod
    ```
 
 ## Usage
 
 ```ts
 import { experimental_evaluate } from 'ai';
-import { createLayaMlx, layaMlx } from 'laya-mlx';
+import { createLayaMlx, layaMlx } from '@noahwaldner/laya-mlx-http';
 
 const result = await experimental_evaluate({
   model: layaMlx.evaluationModel('laya-mlx'),
@@ -59,26 +59,21 @@ console.log(result.answers);
 
 ```ts
 const laya = createLayaMlx({
-  baseURL: 'http://mac-mini.local:8000',
-  apiKey: process.env.LAYA_MLX_API_KEY, // optional; only if the server runs with --api-key
+  baseURL: 'http://localhost:8000',
+  apiKey: 'your-key', // optional; must match the server's --api-key, passed explicitly
 });
-```
-
-or purely via environment:
-
-```bash
-LAYA_MLX_BASE_URL=http://mac-mini.local:8000
-LAYA_MLX_API_KEY=...
 ```
 
 ### Options
 
-| Option | Environment variable | Default |
-| --- | --- | --- |
-| `baseURL` | `LAYA_MLX_BASE_URL` | `http://127.0.0.1:8000` |
-| `apiKey` (sent as `X-API-Key`) | `LAYA_MLX_API_KEY` | none |
-| `headers` | — | none |
-| `fetch` | — | global `fetch` |
+| Option | Default |
+| --- | --- |
+| `baseURL` | `http://127.0.0.1:8000` |
+| `apiKey` (sent as `X-API-Key`) | none (must be passed explicitly) |
+| `headers` | none |
+| `fetch` | global `fetch` |
+
+No environment variables are read; configuration is explicit only.
 
 ## What gets sent
 
@@ -99,7 +94,7 @@ This provider only implements the evaluation model: `languageModel()`, `embeddin
 npm install
 npm test          # vitest, stubbed fetch
 npm run build
-npm run example   # against a local laya-mlx-serve on :8000
+npm run example   # against a local laya-mlx-http on :8000
 ```
 
 ## License

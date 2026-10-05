@@ -1,4 +1,4 @@
-"""Command line interface for laya-mlx-serve."""
+"""Command line interface for laya-mlx-http."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ COMMANDS = ("run", "install", "uninstall", "start", "stop", "status", "logs")
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="laya-mlx-serve",
+        prog="laya-mlx-http",
         description="Serve laya-mlx typed decision models over HTTP.",
         epilog=(
             "With no command the server runs in the foreground. "
@@ -62,7 +62,7 @@ def _run_server(settings: Settings) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    settings = Settings.from_env().with_overrides(
+    settings = Settings().with_overrides(
         host=args.host,
         port=args.port,
         api_key=args.api_key,

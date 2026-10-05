@@ -1,10 +1,18 @@
 {
-  "name": "laya-mlx",
+  "name": "@noahwaldner/laya-mlx-http",
   "version": "0.1.0",
   "type": "module",
   "license": "Apache-2.0",
   "sideEffects": false,
-  "description": "AI SDK evaluation provider for a laya-mlx server (local typed decisions on Apple silicon)",
+  "description": "AI SDK evaluation provider for a laya-mlx HTTP server (local typed decisions on Apple silicon)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/noahwaldner/laya-mlx-http.git"
+  },
+  "homepage": "https://github.com/noahwaldner/laya-mlx-http/tree/master/ai-provider#readme",
+  "bugs": {
+    "url": "https://github.com/noahwaldner/laya-mlx-http/issues"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -25,7 +33,11 @@
     "type-check": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "prepack": "npm run build",
+    "prepublishOnly": "npm test",
     "example": "npm run build && tsx example/evaluate.ts"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [
     "ai-sdk",

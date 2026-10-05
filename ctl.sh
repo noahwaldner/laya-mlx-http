@@ -1,26 +1,21 @@
 #!/usr/bin/env bash
 # Dev convenience: start/stop the API in the background with a pidfile.
-# For a real deployment use `laya-mlx-serve install` (launchd) instead.
+# For a real deployment use `laya-mlx-http install` (launchd) instead.
+#
+# All configuration is explicit: flags after the command are forwarded to
+# laya-mlx-http. No environment variables and no .env files are read.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
-
-if [ -f .env ]; then
-  set -a
-  . ./.env
-  set +a
-fi
 
 RUN_DIR="$PWD/run"
 PID_FILE="$RUN_DIR/server.pid"
 LOG_FILE="$RUN_DIR/server.log"
-HOST="${LAYA_MLX_HOST:-127.0.0.1}"
-PORT="${LAYA_MLX_PORT:-8000}"
-READY_TIMEOUT="${READY_TIMEOUT:-300}"
-SERVE="$PWD/.venv/bin/laya-mlx-serve"
-BASE_URL="http://127.0.0.1:${PORT}"
-export LAYA_MLX_HOST LAYA_MLX_PORT
-if [ -n "${LAYA_MLX_API_KEY:-}" ]; then export LAYA_MLX_API_KEY; fi
-if [ -n "${LAYA_MLX_MODEL_ID:-}" ]; then export LAYA_MLX_MODEL_ID; fi
+READY_TIMEOUT=300
+SERVE="$PWD/.venv/bin/laya-mlx-http"
+
+# Tracked from the forwarded flags so readiness checks hit the right port.
+HOST=127.0.0.1
+PORT=8000
 
 pid() {
   [ -f "$PID_FILE" ] || return 1
@@ -40,10 +35,27 @@ port_busy() {
 }
 
 ready() {
-  curl -fsS --max-time 3 "$BASE_URL/health" 2>/dev/null | grep -Eq '"ready"[[:space:]]*:[[:space:]]*true'
+  curl -fsS --max-time 3 "http://127.0.0.1:${PORT}/health" 2>/dev/null | grep -Eq '"ready"[[:space:]]*:[[:space:]]*true'
+}
+
+track_flags() {
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --host)   HOST="${2:?--host needs a value}"; shift 2 ;;
+      --host=*) HOST="${1#--host=}"; shift ;;
+      --port)   PORT="${2:?--port needs a value}"; shift 2 ;;
+      --port=*) PORT="${1#--port=}"; shift ;;
+      *)        shift ;;
+    esac
+  done
 }
 
 start() {
+  if [ ! -x "$SERVE" ]; then
+    echo "error: $SERVE is missing." >&2
+    echo "Run 'make setup' first (or: uv venv && uv pip install -e './python[dev]' --python .venv/bin/python)." >&2
+    exit 1
+  fi
   if p="$(pid)"; then
     echo "already running (pid $p, port $PORT)"
     return 0
@@ -56,7 +68,7 @@ start() {
   fi
   mkdir -p "$RUN_DIR"
   echo "starting server (host $HOST, port $PORT) ..."
-  "$SERVE" >>"$LOG_FILE" 2>&1 &
+  "$SERVE" "$@" >>"$LOG_FILE" 2>&1 &
   echo $! >"$PID_FILE"
   p="$(pid)"
   echo "pid $p, log $LOG_FILE"
@@ -114,20 +126,17 @@ status() {
   fi
   if ready; then state="ready"; else state="starting / unhealthy"; fi
   echo "running: pid $p, state $state"
-  echo "local:   $BASE_URL"
+  echo "local:   http://127.0.0.1:${PORT}"
   echo "lan:     http://$(lan_ip):${PORT}"
   echo "log:     $LOG_FILE"
 }
 
-case "${1:-}" in
-  start)   start ;;
-  stop)    stop ;;
-  restart) stop; start ;;
-  status)  status ;;
-  logs)    mkdir -p "$RUN_DIR"; touch "$LOG_FILE"; exec tail -n 100 -f "$LOG_FILE" ;;
+CMD="${1:-}"
+case "$CMD" in
+  start|stop|restart|status|logs) ;;
   *)
     cat <<EOF
-usage: $0 {start|stop|restart|status|logs}
+usage: $0 {start|stop|restart|status|logs} [server flags]
 
   start    launch the server in the background, wait until the model is loaded
   stop     graceful stop (SIGTERM, then SIGKILL after 20s)
@@ -135,11 +144,23 @@ usage: $0 {start|stop|restart|status|logs}
   status   pid, readiness, urls
   logs     follow $LOG_FILE
 
-Config comes from a .env file (see examples/.env.example) or the environment:
-  LAYA_MLX_HOST  LAYA_MLX_PORT  LAYA_MLX_API_KEY  LAYA_MLX_MODEL_ID  READY_TIMEOUT
+Flags after the command are forwarded to laya-mlx-http, e.g.:
+  $0 start --host 0.0.0.0 --api-key "\$(openssl rand -hex 24)" --model some/model
+
+Defaults: 127.0.0.1:8000. Nothing is read from the environment or a .env file.
 
 This script is for local development; production boxes should use:
-  laya-mlx-serve install   (launchd user agent, survives reboots)
+  laya-mlx-http install   (launchd user agent, survives reboots)
 EOF
     exit 1 ;;
+esac
+shift
+track_flags "$@"
+
+case "$CMD" in
+  start)   start "$@" ;;
+  stop)    stop ;;
+  restart) stop; start "$@" ;;
+  status)  status ;;
+  logs)    mkdir -p "$RUN_DIR"; touch "$LOG_FILE"; exec tail -n 100 -f "$LOG_FILE" ;;
 esac

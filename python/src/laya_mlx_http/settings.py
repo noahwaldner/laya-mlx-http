@@ -1,8 +1,7 @@
-"""Runtime configuration for the laya-mlx-serve HTTP API."""
+"""Runtime configuration for the laya-mlx-http HTTP API."""
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass, replace
 
 DEFAULT_HOST = "127.0.0.1"
@@ -15,7 +14,8 @@ LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 
 @dataclass(frozen=True)
 class Settings:
-    """Server settings. Flags override environment variables."""
+    """Server settings. Everything is explicit (CLI flags or arguments) —
+    no environment variables or config files are read."""
 
     host: str = DEFAULT_HOST
     port: int = DEFAULT_PORT
@@ -37,15 +37,3 @@ class Settings:
     def with_overrides(self, **overrides: object) -> "Settings":
         """Return a copy, ignoring every override whose value is None."""
         return replace(self, **{k: v for k, v in overrides.items() if v is not None})
-
-    @classmethod
-    def from_env(cls) -> "Settings":
-        port = os.environ.get("LAYA_MLX_PORT")
-        return cls(
-            host=os.environ.get("LAYA_MLX_HOST") or DEFAULT_HOST,
-            port=int(port) if port else DEFAULT_PORT,
-            api_key=os.environ.get("LAYA_MLX_API_KEY") or None,
-            model_id=os.environ.get("LAYA_MLX_MODEL_ID") or DEFAULT_MODEL_ID,
-            dtype=os.environ.get("LAYA_MLX_DTYPE") or DEFAULT_DTYPE,
-            log_level=os.environ.get("LAYA_MLX_LOG_LEVEL") or DEFAULT_LOG_LEVEL,
-        )

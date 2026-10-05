@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 def __getattr__(name: str):
-    # Keep ``import laya_mlx_serve`` cheap: the heavy MLX import only happens
+    # Keep ``import laya_mlx_http`` cheap: the heavy MLX import only happens
     # when create_app/Settings are actually touched.
     if name == "create_app":
         from .app import create_app

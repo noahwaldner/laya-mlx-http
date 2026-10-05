@@ -1,0 +1,80 @@
+name: Release
+
+# Push a tag like v0.2.0 to publish both packages:
+#   python3 scripts/versions.py set 0.2.0 && git commit -am "bump 0.2.0"
+#   git tag v0.2.0 && git push origin master --tags
+#
+# One-time setup (see RELEASING.md):
+#   - PyPI: pending trusted publisher (workflow: release.yml)
+#   - npm: NPM_TOKEN secret for the first publish, then a trusted publisher
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: tag matches package versions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: python3 scripts/versions.py check "$GITHUB_REF_NAME"
+
+  pypi:
+    name: publish laya-mlx-http to PyPI
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # trusted publishing (OIDC)
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10
+
+      - name: Build sdist + wheel
+        run: uv build --out-dir dist python
+
+      - name: Publish (trusted publishing, no token)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+
+  npm:
+    name: publish @noahwaldner/laya-mlx-http to npm
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # OIDC trusted publishing + provenance
+      contents: read
+    defaults:
+      run:
+        working-directory: ai-provider
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false # no caching in release builds
+
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      # npm >= 11.5.1 is required for OIDC trusted publishing
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      # OIDC is used automatically when a trusted publisher is configured;
+      # NPM_TOKEN is only the fallback for the very first publish.
+      - name: Publish
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -61,7 +61,7 @@ class PredictRequest(BaseModel):
 
 def create_app(settings: Optional[Settings] = None) -> FastAPI:
     """Build the FastAPI app. The model loads when the app starts (lifespan)."""
-    settings = settings or Settings.from_env()
+    settings = settings or Settings()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -154,5 +154,5 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
     return app
 
 
-#: Env-configured instance: ``uvicorn laya_mlx_serve:app``.
+#: Default-settings instance: ``uvicorn laya_mlx_http:app``.
 app = create_app()

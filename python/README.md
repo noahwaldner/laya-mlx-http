@@ -1,27 +1,27 @@
-# laya-mlx-serve
+# laya-mlx-http
 
 HTTP server for [laya-mlx](https://pypi.org/project/laya-mlx/) typed decision models.
 Runs the model once, keeps it in unified memory, and answers `POST /v1/predict`
 requests from anything on your network — the companion
-[`laya-mlx`](https://www.npmjs.com/package/laya-mlx) npm provider, Home Assistant,
-or plain `curl`.
+[`@noahwaldner/laya-mlx-http`](https://www.npmjs.com/package/@noahwaldner/laya-mlx-http)
+npm provider or plain `curl`.
 
-Requires Apple silicon (MLX).
+Requires Apple silicon (MLX) and Python 3.11+.
 
 ## Install
 
 ```bash
-pip install laya-mlx-serve          # or: uv tool install laya-mlx-serve
+pip install laya-mlx-http          # or: uv tool install laya-mlx-http
 ```
 
 ## Run
 
 ```bash
 # localhost only (default, safest)
-laya-mlx-serve
+laya-mlx-http
 
 # expose on your LAN — always set an API key
-laya-mlx-serve --host 0.0.0.0 --api-key "$(openssl rand -hex 24)"
+laya-mlx-http --host 0.0.0.0 --api-key "$(openssl rand -hex 24)"
 ```
 
 Then from another machine:
@@ -44,31 +44,31 @@ If `--api-key` is set, `/v1/*` requires `X-API-Key: <key>` (or `Authorization: B
 ## Run at login (launchd, macOS)
 
 ```bash
-laya-mlx-serve install --host 0.0.0.0 --api-key "$KEY"   # write + load a user agent
-laya-mlx-serve start | stop | status | logs | uninstall
+laya-mlx-http install --host 0.0.0.0 --api-key "$KEY"   # write + load a user agent
+laya-mlx-http start | stop | status | logs | uninstall
 ```
 
 No sudo, no hand-edited system files; the plist lives in `~/Library/LaunchAgents`.
 
 ## Configuration
 
-Flags override environment variables:
+Flags only — nothing is read from the environment or a config file:
 
-| Flag | Environment variable | Default |
-|---|---|---|
-| `--host` | `LAYA_MLX_HOST` | `127.0.0.1` |
-| `--port` | `LAYA_MLX_PORT` | `8000` |
-| `--api-key` | `LAYA_MLX_API_KEY` | unset (no auth) |
-| `--model` | `LAYA_MLX_MODEL_ID` | `aac6fef/laya-mlx` |
-| `--dtype` | `LAYA_MLX_DTYPE` | `float16` |
+| Flag | Default |
+|---|---|
+| `--host` | `127.0.0.1` |
+| `--port` | `8000` |
+| `--api-key` | unset (no auth) |
+| `--model` | `aac6fef/laya-mlx` |
+| `--dtype` | `float16` |
 
 ## Library use
 
 ```python
-from laya_mlx_serve import create_app, Settings
+from laya_mlx_http import create_app, Settings
 
 app = create_app(Settings(host="127.0.0.1", port=8000, api_key="…"))
-# uvicorn laya_mlx_serve:app   ← env-configured instance
+# uvicorn laya_mlx_http:app   ← runs with default settings (127.0.0.1:8000)
 ```
 
 ## License

@@ -1,4 +1,4 @@
-from laya_mlx_serve import Settings
+from laya_mlx_http import Settings
 
 
 def test_defaults_are_loopback_only():
@@ -22,15 +22,20 @@ def test_with_overrides_ignores_none():
     assert settings.api_key is None
 
 
-def test_from_env(monkeypatch):
-    monkeypatch.setenv("LAYA_MLX_HOST", "0.0.0.0")
-    monkeypatch.setenv("LAYA_MLX_PORT", "9000")
-    monkeypatch.setenv("LAYA_MLX_API_KEY", "hunter2")
-    monkeypatch.setenv("LAYA_MLX_MODEL_ID", "some/model")
-    monkeypatch.setenv("LAYA_MLX_DTYPE", "float32")
-    settings = Settings.from_env()
-    assert settings.host == "0.0.0.0"
-    assert settings.port == 9000
-    assert settings.api_key == "hunter2"
-    assert settings.model_id == "some/model"
-    assert settings.dtype == "float32"
+def test_environment_is_ignored(monkeypatch):
+    for key in (
+        "LAYA_MLX_HOST",
+        "LAYA_MLX_PORT",
+        "LAYA_MLX_API_KEY",
+        "LAYA_MLX_MODEL_ID",
+        "LAYA_MLX_DTYPE",
+        "LAYA_MLX_LOG_LEVEL",
+    ):
+        monkeypatch.setenv(key, "bogus")
+    settings = Settings()
+    assert settings.host == "127.0.0.1"
+    assert settings.port == 8000
+    assert settings.api_key is None
+    assert settings.model_id == "aac6fef/laya-mlx"
+    assert settings.dtype == "float16"
+    assert settings.log_level == "info"
