@@ -112,10 +112,6 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
 
     api = APIRouter(prefix="/v1", dependencies=[Depends(require_api_key)])
 
-    @api.get("/presets")
-    def list_presets():
-        return {"presets": {name: fn() for name, fn in PRESETS.items()}}
-
     @api.post("/predict")
     def predict_post(payload: PredictRequest):
         questions = resolve_questions(payload.questions, payload.preset)

@@ -4,6 +4,12 @@ AI SDK [evaluation provider](https://ai-sdk.dev/providers/ai-sdk-providers/types
 [`laya-mlx-http`](https://pypi.org/project/laya-mlx-http/) server: Choice, Score and Boolean
 questions answered by a typed decision model running on Apple silicon.
 
+**This package is only the adapter.** It holds no model and serves no HTTP — it turns
+`experimental_evaluate` calls into `POST /v1/predict` requests and maps the answers back.
+The server is the Python package `laya-mlx-http`; its API is documented in the
+[`python/README.md` "Predict format" section](https://github.com/noahwaldner/laya-mlx-http/blob/master/python/README.md#predict-format).
+You do not need this adapter to use the server: any HTTP client can call the API directly.
+
 It speaks plain HTTP to your own `laya-mlx-http` instance — machine A holds the model,
 machine B (or C) just needs the URL.
 
@@ -16,7 +22,7 @@ machine B (or C) just needs the URL.
    laya-mlx-http --host 0.0.0.0 --api-key "$(openssl rand -hex 24)"
    ```
 
-2. **Client** (any machine, Node 22+):
+2. **Client — only needed for the AI SDK** (any machine, Node 22+):
 
    ```bash
    npm install @noahwaldner/laya-mlx-http ai zod
@@ -75,15 +81,30 @@ const laya = createLayaMlx({
 
 No environment variables are read; configuration is explicit only.
 
-## What gets sent
+## Adapter vs the raw API
 
-- `state` — a string is sent as-is; objects/arrays are `JSON.stringify`-ed.
-- Questions are translated from AI SDK vocabulary to Laya's: `boolean` → `noul`,
-  structured `instructions`/criteria become JSON text, `null` criteria stay "no description".
-- Answers come back as `choice` / `score` / `boolean` (from `noul`) with the full probability
-  distribution. The server rounds to 4 decimals and the provider declares that rounding.
-- Per-question model confidence is exposed as
-  `result.providerMetadata.layaMlx.confidence[questionId]`.
+The table below is everything this package does beyond talking HTTP. The server itself only
+ever sees the wire format in
+[`python/README.md`](https://github.com/noahwaldner/laya-mlx-http/blob/master/python/README.md#predict-format).
+
+| AI SDK side (this adapter) | On the wire (`POST /v1/predict`) |
+| --- | --- |
+| `state` — string, or object/array | `text` — string (objects/arrays are `JSON.stringify`-ed) |
+| question type `boolean` | `type: "noul"` (Laya's boolean primitive) |
+| structured `instructions` / criteria | JSON text (the server wants text) |
+| answer `type: "boolean"`, `probability` | answer `type: "noul"`, `noul` |
+| `choice` / `score` answers + `probabilities` | passed through unchanged |
+| `null` criterion description | `null` for choice/boolean, `""` for score levels (avoids `level N: null`) |
+| `providerMetadata.layaMlx.confidence[qid]` | `answers[qid].confidence` |
+| `usage.inputTokens` / `usage.outputTokens` | `usage.input_tokens` / `usage.output_tokens` (token/truncation detail stays in `result.response.body`) |
+| declared rounding (4 decimals) | server rounds probabilities/scores/confidence to 4 decimals |
+| `modelId` | `model` (echo override; the response's `model` is surfaced as `response.modelId`) |
+
+Server features this adapter deliberately does **not** expose — use the raw API for them:
+
+- `preset` — `providerOptions.layaMlx.preset` produces an `unsupported` warning and is
+  ignored; always send an explicit `questions` map, or call the server directly;
+- `flat` (the flat answer map) and the `GET /v1/predict` query-string variant.
 
 This provider only implements the evaluation model: `languageModel()`, `embeddingModel()` and
 `imageModel()` throw `NoSuchModelError` — Laya answers questions, it does not generate text.

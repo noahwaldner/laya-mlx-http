@@ -102,7 +102,6 @@ def test_bearer_token_is_accepted(guarded_client: TestClient):
 
 def test_get_requires_api_key(guarded_client: TestClient):
     assert guarded_client.get("/v1/predict", params={"text": "x", "preset": PRESET}).status_code == 401
-    assert guarded_client.get("/v1/presets").status_code == 401
 
 
 def test_post_predict_with_preset(client: TestClient, agent: StubAgent):
@@ -176,14 +175,6 @@ def test_get_predict_rejects_invalid_questions_json(client: TestClient):
         "/v1/predict", params={"text": "x", "questions": "{not json"}
     )
     assert response.status_code == 400
-
-
-def test_presets_endpoint(client: TestClient):
-    response = client.get("/v1/presets")
-    assert response.status_code == 200
-    presets = response.json()["presets"]
-    assert set(presets) == {"triage", "email", "guard", "moderation", "router"}
-    assert presets["triage"]["intent"]["type"] == "choice"
 
 
 def test_503_before_model_load():

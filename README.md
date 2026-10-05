@@ -19,6 +19,15 @@ Two packages, one repo:
 | [`laya-mlx-http`](python/) | PyPI | the HTTP server (`laya-mlx-http` CLI) |
 | [`@noahwaldner/laya-mlx-http`](ai-provider/) | npm | AI SDK evaluation provider (`layaMlx.evaluationModel()`) |
 
+The server is standalone: it exposes one client-agnostic JSON API, so `curl`, Python, Node
+or a sensor can use it without any SDK. The npm package is only an adapter for the Vercel
+AI SDK — you need it *only* if you call the model through `experimental_evaluate`.
+
+| You want to… | You need |
+| --- | --- |
+| run a model and call it over HTTP (any language) | `laya-mlx-http` (PyPI) alone |
+| call it from the Vercel AI SDK | both: the server + `@noahwaldner/laya-mlx-http` |
+
 ## Quickstart
 
 **On the machine with the GPU:**
@@ -33,7 +42,10 @@ laya-mlx-http
 laya-mlx-http --host 0.0.0.0 --api-key "$(openssl rand -hex 24)"
 ```
 
-**On the machine writing code:**
+That's the whole server side. Skip everything below if you just want to `curl` it —
+see [Server HTTP API](#server-http-api).
+
+**On the machine writing code (AI SDK — optional, needs the server above):**
 
 ```bash
 npm install @noahwaldner/laya-mlx-http ai zod
@@ -78,14 +90,20 @@ The agent lives in `~/Library/LaunchAgents/laya-mlx-http.plist`, starts at login
 restarts on crash. For local development there is also [`ctl.sh`](ctl.sh)
 (`./ctl.sh start|stop|status|logs`, pidfile in `run/`).
 
-## Endpoints
+## Server HTTP API
+
+The raw API of the `laya-mlx-http` server. It is client-agnostic — use it directly with
+`curl`/`fetch`/`requests`, no SDK involved. The npm package is a thin adapter over
+`POST /v1/predict`.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `GET` | `/health` | liveness + readiness, never authenticated |
-| `GET` | `/v1/presets` | bundled question sets: `triage`, `email`, `guard`, `moderation`, `router` |
 | `POST` | `/v1/predict` | `{"text": "…", "preset": "triage", "flat": true}` or a full `questions` map |
 | `GET` | `/v1/predict?text=…&preset=triage&flat=true` | same, for simple clients (sensors, curl) |
+
+Presets: `triage`, `email`, `guard`, `moderation`, `router`. Full request/response format —
+including the `questions` schema — is documented in [`python/README.md`](python/README.md#predict-format).
 
 With `--api-key` set, `/v1/*` requires `X-API-Key: <key>` (or `Authorization: Bearer <key>`).
 
